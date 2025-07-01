@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,11 +44,34 @@ public class ControllerCursos {
         if (existente.isPresent()) {
             CursosEntity curso = existente.get();
             curso.setName(atualizado.getName());
-            // Adicione aqui outros campos se existirem
             return ResponseEntity.ok(repository.save(curso));
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+    @PatchMapping("/curso/{id}")
+    public ResponseEntity<CursosEntity> patchUpdate(@PathVariable UUID id, @RequestBody Map<String, Object> updates) {
+        Optional<CursosEntity> existente = repository.findById(id);
+        if (existente.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        CursosEntity curso = existente.get();
+
+        updates.forEach((chave, valor) -> {
+            switch (chave) {
+                case "name":
+                    curso.setName((String) valor);
+                case "category":
+                    curso.setCategory((String) valor);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Campo '" + chave + "' não pode ser atualizado.");
+            }
+        });
+
+        CursosEntity atualizado = repository.save(curso);
+        return ResponseEntity.ok(atualizado);
     }
 
 }
